@@ -1,5 +1,5 @@
 import { createAzure } from "./src/azure-ai-provider";
-import { CoreMessage, generateText, smoothStream, streamText, tool } from "ai";
+import { CoreMessage, smoothStream, streamText, tool } from "ai";
 import { z } from "zod";
 import dotenv from "dotenv";
 import * as readline from "node:readline/promises";
@@ -23,8 +23,8 @@ async function main() {
     const userInput = await terminal.question("You: ");
     messages.push({ role: "user", content: userInput });
 
-    const result = await generateText({
-      model: azure("DeepSeek-R1"),
+    const result = streamText({
+      model: azure("Llama-3.3-70B-Instruct"),
       messages: [
         {
           role: "system",
@@ -48,8 +48,10 @@ async function main() {
     });
 
     process.stdout.write("\nAssistant: ");
-    console.log(JSON.stringify(result, null, 2));
-    messages.push({ role: "assistant", content: result.text });
+    for await (const part of result.textStream) {
+      process.stdout.write(part);
+    }
+    console.log("full text: ", await result.text);
   }
 }
 

@@ -80,7 +80,6 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     }
 
     const messages = convertToAzureChatMessages(prompt);
-    console.log("Converted messages:", JSON.stringify(messages, null, 2));
 
     const baseArgs = {
       messages,
@@ -99,10 +98,6 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     switch (type) {
       case "regular": {
         const { tools, tool_choice, toolWarnings } = prepareTools(mode);
-        console.log(
-          "Tools configuration:",
-          JSON.stringify({ tools, tool_choice }, null, 2)
-        );
         return {
           args: {
             ...baseArgs,
@@ -153,12 +148,8 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     });
 
     if (isUnexpected(response)) {
-      console.log("Unexpected response:", JSON.stringify(response, null, 2));
       throw response.body.error;
     }
-    console.log(
-      "Choices stringified: " + JSON.stringify(response.body.choices, null, 2)
-    );
 
     const { messages: rawPrompt, ...rawSettings } = args;
     const choice = response.body.choices[0];
@@ -192,8 +183,6 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
   ): Promise<Awaited<ReturnType<LanguageModelV1["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
     const body = { ...args, stream: true };
-
-    console.log("Azure request:", JSON.stringify(body, null, 2));
 
     const response = await this.client
       .path("/chat/completions")
@@ -263,11 +252,6 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
                 } catch (e) {
                   console.error("Failed to parse tool call:", e);
                 }
-              } else {
-                console.log(
-                  "Incomplete tool call:",
-                  JSON.stringify(toolCall, null, 2)
-                );
               }
             }
 

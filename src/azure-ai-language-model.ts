@@ -3,6 +3,7 @@ import {
   LanguageModelV1CallWarning,
   LanguageModelV1FinishReason,
   LanguageModelV1StreamPart,
+  LanguageModelV1FunctionToolCall,
 } from "@ai-sdk/provider";
 import {
   FetchFunction,
@@ -78,8 +79,11 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
       warnings.push({ type: "unsupported-setting", setting: "topK" });
     }
 
+    const messages = convertToAzureChatMessages(prompt);
+    console.log("Converted messages:", JSON.stringify(messages, null, 2));
+
     const baseArgs = {
-      messages: convertToAzureChatMessages(prompt),
+      messages,
       model: this.modelId,
       max_tokens: maxTokens,
       temperature,
@@ -95,8 +99,17 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     switch (type) {
       case "regular": {
         const { tools, tool_choice, toolWarnings } = prepareTools(mode);
+        console.log(
+          "Tools configuration:",
+          JSON.stringify({ tools, tool_choice }, null, 2)
+        );
         return {
-          args: { ...baseArgs, tools, tool_choice },
+          args: {
+            ...baseArgs,
+            tools,
+            //ool_choice: "auto", // Always use "auto" when tools are present
+            temperature: temperature ?? 0, // Make the model more deterministic with tools
+          },
           warnings: [...warnings, ...toolWarnings],
         };
       }
@@ -115,7 +128,8 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
         return {
           args: {
             ...baseArgs,
-            tool_choice: "any",
+            //tool_choice: "any",
+
             tools: [{ type: "function" as const, function: mode.tool }],
           },
           warnings,
@@ -139,8 +153,12 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     });
 
     if (isUnexpected(response)) {
+      console.log("Unexpected response:", JSON.stringify(response, null, 2));
       throw response.body.error;
     }
+    console.log(
+      "Choices stringified: " + JSON.stringify(response.body.choices, null, 2)
+    );
 
     const { messages: rawPrompt, ...rawSettings } = args;
     const choice = response.body.choices[0];
@@ -148,12 +166,14 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
 
     return {
       text,
-      toolCalls: choice.message.tool_calls?.map((toolCall) => ({
-        toolCallType: "function",
-        toolCallId: toolCall.id,
-        toolName: toolCall.function.name,
-        args: toolCall.function.arguments,
-      })),
+      toolCalls: choice.message.tool_calls?.map(
+        (toolCall): LanguageModelV1FunctionToolCall => ({
+          toolCallType: "function",
+          toolCallId: toolCall.id,
+          toolName: toolCall.function.name,
+          args: toolCall.function.arguments,
+        })
+      ),
       finishReason: mapAzureFinishReason(choice.finish_reason ?? "unknown"),
       usage: {
         promptTokens: response.body.usage.prompt_tokens,
@@ -172,6 +192,8 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
   ): Promise<Awaited<ReturnType<LanguageModelV1["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
     const body = { ...args, stream: true };
+
+    console.log("Azure request:", JSON.stringify(body, null, 2));
 
     const response = await this.client
       .path("/chat/completions")
@@ -192,6 +214,12 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
       completionTokens: Number.NaN,
     };
 
+    const functionArray: Array<{
+      name: string;
+      arguments: string;
+      id: string;
+    }> = [];
+
     return {
       stream: stream.pipeThrough(
         new TransformStream<{ data: string }, LanguageModelV1StreamPart>({
@@ -206,17 +234,44 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
 
             if (!choice) return;
 
-            if (data.usage) {
-              usage = {
-                promptTokens: data.usage.prompt_tokens,
-                completionTokens: data.usage.completion_tokens,
-              };
+            // Handle tool calls in delta responses
+            if (choice.delta?.tool_calls?.[0]) {
+              const toolCall = choice.delta.tool_calls[0];
+              let index = functionArray.findIndex((f) => f.id === toolCall.id);
+
+              if (index === -1) {
+                index = functionArray.length;
+                functionArray.push({
+                  name: toolCall.function?.name || "",
+                  arguments: toolCall.function?.arguments || "",
+                  id: toolCall.id,
+                });
+              } else if (toolCall.function?.arguments) {
+                functionArray[index].arguments += toolCall.function.arguments;
+              }
+
+              // If we have complete arguments, emit the tool call
+              if (functionArray[index].name && functionArray[index].arguments) {
+                try {
+                  controller.enqueue({
+                    type: "tool-call",
+                    toolCallType: "function",
+                    toolCallId: functionArray[index].id,
+                    toolName: functionArray[index].name,
+                    args: functionArray[index].arguments,
+                  });
+                } catch (e) {
+                  console.error("Failed to parse tool call:", e);
+                }
+              } else {
+                console.log(
+                  "Incomplete tool call:",
+                  JSON.stringify(toolCall, null, 2)
+                );
+              }
             }
 
-            if (choice.delta?.finish_reason) {
-              finishReason = mapAzureFinishReason(choice.delta.finish_reason);
-            }
-
+            // Handle text content
             if (choice.delta?.content) {
               controller.enqueue({
                 type: "text-delta",
@@ -224,16 +279,16 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
               });
             }
 
-            if (choice.delta?.tool_calls) {
-              for (const toolCall of choice.delta.tool_calls) {
-                controller.enqueue({
-                  type: "tool-call",
-                  toolCallType: "function",
-                  toolCallId: toolCall.id,
-                  toolName: toolCall.function.name,
-                  args: toolCall.function.arguments,
-                });
-              }
+            // Update finish reason and usage if present
+            if (choice.delta?.finish_reason) {
+              finishReason = mapAzureFinishReason(choice.delta.finish_reason);
+            }
+
+            if (data.usage) {
+              usage = {
+                promptTokens: data.usage.prompt_tokens,
+                completionTokens: data.usage.completion_tokens,
+              };
             }
           },
         })

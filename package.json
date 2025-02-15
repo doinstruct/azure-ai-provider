@@ -13,14 +13,20 @@
     "typescript": "^5.7.3",
     "vitest": "^1.6.1"
   },
-  "name": "azure-ai-provider",
+  "name": "@quail-ai/azure-ai-provider",
   "version": "1.0.0",
-  "description": "ai sdk compatible provider for azure",
+  "description": "ai sdk compatible provider for azure(non OpenAI models)",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "Olaf Dsouza",
+  "license": "MIT",
+  "keywords": [
+    "azure",
+    "ai",
+    "AI SDK",
+    "provider"
+  ]
 }

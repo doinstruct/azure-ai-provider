@@ -1,5 +1,5 @@
 import { createAzure } from "./src/azure-ai-provider";
-import { CoreMessage, smoothStream, streamText, tool } from "ai";
+import { CoreMessage, generateText, smoothStream, streamText, tool } from "ai";
 import { z } from "zod";
 import dotenv from "dotenv";
 import * as readline from "node:readline/promises";
@@ -18,20 +18,41 @@ const azure = createAzure({
   apiKey: process.env.AZURE_API_KEY,
 });
 
-async function main() {
+async function streaming() {
   while (true) {
     const userInput = await terminal.question("You: ");
     messages.push({ role: "user", content: userInput });
 
     const result = streamText({
-      model: azure("Llama-3.3-70B-Instruct"),
-      messages: [
-        {
-          role: "system",
-          content: "Use the tools provided to best answer the user's question.",
-        },
-        ...messages,
-      ],
+      model: azure("DeepSeek-R1"),
+      messages,
+      experimental_transform: smoothStream({ chunking: "word" }),
+      temperature: 0,
+      maxTokens: 400,
+      system:
+        "You are an assistant that can answer questions and perform tasks",
+    });
+
+    process.stdout.write("Assistant: ");
+    let assistantResponse = "";
+    for await (const part of result.textStream) {
+      process.stdout.write(part);
+      assistantResponse += part;
+    }
+    process.stdout.write("\n");
+
+    messages.push({ role: "assistant", content: assistantResponse });
+  }
+}
+
+async function blocking() {
+  while (true) {
+    const userInput = await terminal.question("You: ");
+    messages.push({ role: "user", content: userInput });
+
+    const result = await generateText({
+      model: azure("DeepSeek-R1"),
+      messages,
       tools: {
         get_weather: tool({
           description:
@@ -44,15 +65,13 @@ async function main() {
         }),
       },
       temperature: 0,
-      maxTokens: 100,
+      maxTokens: 400,
+      system:
+        "You are an assistant that can answer questions and perform tasks.",
     });
 
-    process.stdout.write("\nAssistant: ");
-    for await (const part of result.textStream) {
-      process.stdout.write(part);
-    }
-    console.log("full text: ", await result.text);
+    console.log("Assistant:", result.text);
   }
 }
 
-main().catch(console.error);
+streaming().catch(console.error);

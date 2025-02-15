@@ -1,5 +1,5 @@
 import { LanguageModelV1Prompt } from "@ai-sdk/provider";
-import { createAzureProvider } from "./azure-ai-provider";
+import { createAzure } from "./azure-ai-provider";
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { config } from "dotenv";
 
@@ -33,7 +33,7 @@ describe("AzureChatLanguageModel", () => {
   ];
 
   it("should generate text successfully", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });
@@ -54,7 +54,7 @@ describe("AzureChatLanguageModel", () => {
   });
 
   it("should handle streaming responses", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });
@@ -81,7 +81,7 @@ describe("AzureChatLanguageModel", () => {
   });
 
   it("should handle tools correctly", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });

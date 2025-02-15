@@ -1,4 +1,4 @@
-import { createAzureProvider } from "./src/azure-ai-provider";
+import { createAzure } from "./src/azure-ai-provider";
 import { CoreMessage, generateText, smoothStream, streamText, tool } from "ai";
 import { z } from "zod";
 import dotenv from "dotenv";
@@ -13,7 +13,7 @@ const terminal = readline.createInterface({
 
 const messages: CoreMessage[] = [];
 
-const azure = createAzureProvider({
+const azure = createAzure({
   endpoint: process.env.AZURE_API_ENDPOINT,
   apiKey: process.env.AZURE_API_KEY,
 });

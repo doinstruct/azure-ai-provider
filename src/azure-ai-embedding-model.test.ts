@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
-import { createAzureProvider } from "./azure-ai-provider";
+import { createAzure } from "./azure-ai-provider";
 import { config } from "dotenv";
 
 config();
@@ -9,7 +9,7 @@ describe("AzureEmbeddingModel", () => {
   const MODEL_NAME = "text-embedding-3-small";
 
   it("should generate embeddings successfully", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });
@@ -27,7 +27,7 @@ describe("AzureEmbeddingModel", () => {
   });
 
   it("should handle batch size limits", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });
@@ -46,7 +46,7 @@ describe("AzureEmbeddingModel", () => {
   });
 
   it("should handle errors gracefully", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: "invalid-key",
     });
@@ -61,7 +61,7 @@ describe("AzureEmbeddingModel", () => {
   });
 
   it("should respect abort signals", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
     });
@@ -80,7 +80,7 @@ describe("AzureEmbeddingModel", () => {
   });
 
   it("should handle custom headers", async () => {
-    const provider = createAzureProvider({
+    const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,
       headers: {

@@ -76,7 +76,7 @@ export interface AzureProviderSettings {
   headers?: Record<string, string>;
 }
 
-export function createAzureProvider(
+export function createAzure(
   options: AzureProviderSettings = {}
 ): AzureProvider {
   const baseURL =
@@ -138,4 +138,4 @@ export function createAzureProvider(
 /**
  * Default Azure AI provider instance
  */
-export const azureProvider = createAzureProvider();
+export const azureProvider = createAzure();

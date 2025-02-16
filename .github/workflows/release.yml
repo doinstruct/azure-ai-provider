@@ -30,6 +30,8 @@ jobs:
           path: |
             dist/
             package.json
+            README.md
+            LICENSE
 
   release:
     needs: test
@@ -72,14 +74,18 @@ jobs:
         with:
           name: build-artifacts
           path: .
+
+      # Install dependencies
+      - run: npm install --production
+
       # Publish to npm
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
           registry-url: "https://registry.npmjs.org"
-          scope: "@quail-ai"
-      - run: npm install
-      - run: npm publish --provenance --access public
+      - run: |
+          npm config set registry https://registry.npmjs.org/
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -88,10 +94,10 @@ jobs:
         with:
           node-version: "20.x"
           registry-url: "https://npm.pkg.github.com"
-          scope: "@quail-ai"
       - run: |
-          echo "@quail-ai:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+          npm config set registry https://npm.pkg.github.com/
+          npm config set @quail-ai:registry https://npm.pkg.github.com/
+          npm config set //npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN
           npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

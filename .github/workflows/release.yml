@@ -81,6 +81,7 @@ jobs:
           node-version: "20.x"
           registry-url: ${{ matrix.registry.url }}
           scope: "@quail-ai"
+      - run: npm install
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets[matrix.registry.token] }}

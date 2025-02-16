@@ -13,7 +13,7 @@
     "test:ci": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "echo 'Skipping tests as they are run in CI'"
   },
   "dependencies": {
     "@ai-sdk/provider": "^1.0.7",

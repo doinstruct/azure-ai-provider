@@ -65,6 +65,7 @@ jobs:
     permissions:
       packages: write
       id-token: write
+      contents: read
     strategy:
       matrix:
         registry:
@@ -81,6 +82,11 @@ jobs:
           node-version: "20.x"
           registry-url: ${{ matrix.registry.url }}
           scope: "@quail-ai"
+      - name: Configure npm for GitHub Packages
+        if: matrix.registry.url == 'https://npm.pkg.github.com'
+        run: |
+          echo "@QuailAI:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: npm install
       - run: npm publish --provenance --access public
         env:

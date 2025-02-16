@@ -5,6 +5,9 @@ import { config } from "dotenv";
 
 config();
 
+const hasCredentials =
+  process.env.AZURE_API_KEY && process.env.AZURE_API_ENDPOINT;
+
 describe("AzureChatLanguageModel", () => {
   const mockResponse = {
     id: "mock-id",
@@ -32,55 +35,61 @@ describe("AzureChatLanguageModel", () => {
     { role: "user", content: [{ type: "text", text: "Say hello" }] },
   ];
 
-  it("should generate text successfully", async () => {
-    const provider = createAzure({
-      endpoint: process.env.AZURE_API_ENDPOINT,
-      apiKey: process.env.AZURE_API_KEY,
-    });
+  (hasCredentials ? it : it.skip)(
+    "should generate text successfully",
+    async () => {
+      const provider = createAzure({
+        endpoint: process.env.AZURE_API_ENDPOINT,
+        apiKey: process.env.AZURE_API_KEY,
+      });
 
-    const model = provider.languageModel("Llama-3.3-70B-Instruct");
-    const result = await model.doGenerate({
-      prompt: testPrompt,
-      inputFormat: "prompt",
-      mode: {
-        type: "regular",
-      },
-    });
+      const model = provider.languageModel("Llama-3.3-70B-Instruct");
+      const result = await model.doGenerate({
+        prompt: testPrompt,
+        inputFormat: "prompt",
+        mode: {
+          type: "regular",
+        },
+      });
 
-    expect(result.text).toBeTruthy();
-    expect(result.usage).toBeDefined();
-    expect(result.finishReason).toBeDefined();
-    console.log(result);
-  });
-
-  it("should handle streaming responses", async () => {
-    const provider = createAzure({
-      endpoint: process.env.AZURE_API_ENDPOINT,
-      apiKey: process.env.AZURE_API_KEY,
-    });
-
-    const model = provider.languageModel("Llama-3.3-70B-Instruct");
-    const stream = await model.doStream({
-      prompt: testPrompt,
-      inputFormat: "prompt",
-      mode: {
-        type: "regular",
-      },
-    });
-
-    const chunks: string[] = [];
-    for await (const chunk of stream.stream) {
-      if (chunk.type === "text-delta") {
-        chunks.push(chunk.textDelta);
-      }
+      expect(result.text).toBeTruthy();
+      expect(result.usage).toBeDefined();
+      expect(result.finishReason).toBeDefined();
+      console.log(result);
     }
+  );
 
-    expect(chunks.length).toBeGreaterThan(0);
-    expect(chunks.join("")).toBeTruthy();
-    console.log(chunks.join(""));
-  });
+  (hasCredentials ? it : it.skip)(
+    "should handle streaming responses",
+    async () => {
+      const provider = createAzure({
+        endpoint: process.env.AZURE_API_ENDPOINT,
+        apiKey: process.env.AZURE_API_KEY,
+      });
 
-  it("should handle tools correctly", async () => {
+      const model = provider.languageModel("Llama-3.3-70B-Instruct");
+      const stream = await model.doStream({
+        prompt: testPrompt,
+        inputFormat: "prompt",
+        mode: {
+          type: "regular",
+        },
+      });
+
+      const chunks: string[] = [];
+      for await (const chunk of stream.stream) {
+        if (chunk.type === "text-delta") {
+          chunks.push(chunk.textDelta);
+        }
+      }
+
+      expect(chunks.length).toBeGreaterThan(0);
+      expect(chunks.join("")).toBeTruthy();
+      console.log(chunks.join(""));
+    }
+  );
+
+  (hasCredentials ? it : it.skip)("should handle tools correctly", async () => {
     const provider = createAzure({
       endpoint: process.env.AZURE_API_ENDPOINT,
       apiKey: process.env.AZURE_API_KEY,

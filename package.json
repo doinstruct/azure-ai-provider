@@ -1,6 +1,6 @@
 {
   "name": "@quail-ai/azure-ai-provider",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ai sdk compatible provider for azure(non OpenAI models)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

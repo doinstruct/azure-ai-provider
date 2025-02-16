@@ -37,7 +37,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "@QuailAI:registry": "https://npm.pkg.github.com"
+    "@quail-ai:registry": "https://npm.pkg.github.com/"
   },
   "keywords": [
     "azure",

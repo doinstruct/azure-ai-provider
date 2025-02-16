@@ -66,28 +66,32 @@ jobs:
       packages: write
       id-token: write
       contents: read
-    strategy:
-      matrix:
-        registry:
-          - { url: "https://registry.npmjs.org", token: "NPM_TOKEN" }
-          - { url: "https://npm.pkg.github.com", token: "GITHUB_TOKEN" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: .
+      # Publish to npm
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          registry-url: ${{ matrix.registry.url }}
+          registry-url: "https://registry.npmjs.org"
           scope: "@quail-ai"
-      - name: Configure npm for GitHub Packages
-        if: matrix.registry.url == 'https://npm.pkg.github.com'
-        run: |
-          echo "@QuailAI:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
       - run: npm install
       - run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets[matrix.registry.token] }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish to GitHub Packages
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@quail-ai"
+      - run: |
+          echo "@quail-ai:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

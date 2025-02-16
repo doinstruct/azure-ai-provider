@@ -1,6 +1,6 @@
 {
   "name": "@quail-ai/azure-ai-provider",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "ai sdk compatible provider for azure(non OpenAI models)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,6 +32,11 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/QuailAI/azure-ai-provider.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "@quail-ai:registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "azure",

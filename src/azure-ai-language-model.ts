@@ -5,13 +5,6 @@ import {
   LanguageModelV1StreamPart,
   LanguageModelV1FunctionToolCall,
 } from "@ai-sdk/provider";
-import {
-  FetchFunction,
-  ParseResult,
-  combineHeaders,
-} from "@ai-sdk/provider-utils";
-import { z } from "zod";
-import { GetChatCompletionsHeaderParam } from "@azure-rest/ai-inference";
 import { AzureChatModelId, AzureChatSettings } from "./azure-ai-settings";
 import { mapAzureFinishReason } from "./map-azure-finish-reason";
 import { convertToAzureChatMessages } from "./convert-to-azure-messages";

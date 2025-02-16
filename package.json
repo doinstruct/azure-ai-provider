@@ -36,8 +36,7 @@
     "url": "git+https://github.com/QuailAI/azure-ai-provider.git"
   },
   "publishConfig": {
-    "access": "public",
-    "@quail-ai:registry": "https://npm.pkg.github.com/"
+    "access": "public"
   },
   "keywords": [
     "azure",

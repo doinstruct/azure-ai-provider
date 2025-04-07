@@ -42,6 +42,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "keywords": [
     "azure",
     "ai",

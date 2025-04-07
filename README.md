@@ -22,7 +22,7 @@ npm i @quail-ai/azure-ai-provider
 2. Set up environment variables in your .env file:
 
 ```env
-AZURE_API_ENDPOINT=https://<your-resource>.services.ai.azure.com/models
+AZURE_API_ENDPOINT=https://<your-resource-endpoint>
 AZURE_API_KEY=<your-api-key>
 ```
 

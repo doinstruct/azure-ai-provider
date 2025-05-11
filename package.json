@@ -1,6 +1,6 @@
 {
   "name": "@quail-ai/azure-ai-provider",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "ai sdk compatible provider for azure(non OpenAI models)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

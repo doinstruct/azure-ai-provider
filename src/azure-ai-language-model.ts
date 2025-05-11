@@ -212,38 +212,54 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
             }
 
             const data = JSON.parse(chunk.data);
+
+            if (data.usage) {
+              usage = {
+                promptTokens: data.usage.prompt_tokens,
+                completionTokens: data.usage.completion_tokens,
+              };
+            }
+
             const choice = data.choices?.[0];
 
             if (!choice) return;
 
             // Handle tool calls in delta responses
-            if (choice.delta?.tool_calls?.[0]) {
-              const toolCall = choice.delta.tool_calls[0];
-              let index = functionArray.findIndex((f) => f.id === toolCall.id);
+            if (choice.delta?.tool_calls) {
+              for (const toolCall of choice.delta.tool_calls) {
+                let index = functionArray.findIndex(
+                  (f) => f.id === toolCall.id
+                );
 
-              if (index === -1) {
-                index = functionArray.length;
-                functionArray.push({
-                  name: toolCall.function?.name || "",
-                  arguments: toolCall.function?.arguments || "",
-                  id: toolCall.id,
-                });
-              } else if (toolCall.function?.arguments) {
-                functionArray[index].arguments += toolCall.function.arguments;
-              }
-
-              // If we have complete arguments, emit the tool call
-              if (functionArray[index].name && functionArray[index].arguments) {
-                try {
-                  controller.enqueue({
-                    type: "tool-call",
-                    toolCallType: "function",
-                    toolCallId: functionArray[index].id,
-                    toolName: functionArray[index].name,
-                    args: functionArray[index].arguments,
+                if (index === -1) {
+                  index = functionArray.length;
+                  functionArray.push({
+                    name: toolCall.function?.name || "",
+                    arguments: toolCall.function?.arguments || "",
+                    id: toolCall.id,
                   });
-                } catch (e) {
-                  console.error("Failed to parse tool call:", e);
+                } else if (toolCall.function?.arguments) {
+                  functionArray[index].arguments += toolCall.function.arguments;
+                } else if (toolCall.function?.name) {
+                  functionArray[index].name = toolCall.function.name;
+                }
+
+                // If we have complete arguments, emit the tool call
+                if (
+                  functionArray[index].name &&
+                  functionArray[index].arguments
+                ) {
+                  try {
+                    controller.enqueue({
+                      type: "tool-call",
+                      toolCallType: "function",
+                      toolCallId: functionArray[index].id,
+                      toolName: functionArray[index].name,
+                      args: functionArray[index].arguments,
+                    });
+                  } catch (e) {
+                    console.error("Failed to parse tool call:", e);
+                  }
                 }
               }
             }
@@ -256,16 +272,9 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
               });
             }
 
-            // Update finish reason and usage if present
+            // Update finish reason if present
             if (choice.delta?.finish_reason) {
               finishReason = mapAzureFinishReason(choice.delta.finish_reason);
-            }
-
-            if (data.usage) {
-              usage = {
-                promptTokens: data.usage.prompt_tokens,
-                completionTokens: data.usage.completion_tokens,
-              };
             }
           },
         })

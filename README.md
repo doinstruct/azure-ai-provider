@@ -5,7 +5,9 @@ The Azure custom provider for the [AI SDK](https://sdk.vercel.ai/docs) enables i
 ## Status
 
 - ✅ Chat Completions: Working with both streaming and non-streaming responses
-- ⚠️ Tool Calling: Implementation present but functionality depends on model capabilities
+- ✅ Vision/Images: Support for image inputs with compatible models
+- ⚠️ Tool Calling: Implementation present but functionality depends on model
+  capabilities
 - ⚠️ Embeddings: Implementation present but untested
 
 ## Installation
@@ -93,6 +95,39 @@ const model = azure.textEmbeddingModel("your-embedding-deployment");
 const result = await model.doEmbed({
   values: ["Encode this text"],
 });
+```
+
+### Image Processing
+
+```ts
+import fs from "fs/promises";
+import { generateText } from "ai";
+
+// Load image data
+const imageData = await fs.readFile("path/to/image.png");
+
+const result = await generateText({
+  model: azure("gpt-4o"), // Use a model that supports vision
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "image",
+          image: imageData, // Pass the raw Buffer
+          mimeType: "image/png",
+        },
+        {
+          type: "text",
+          text: "Describe this image in detail.",
+        },
+      ],
+    },
+  ],
+  temperature: 0,
+});
+
+console.log("Description:", result.text);
 ```
 
 ## Configuration Options

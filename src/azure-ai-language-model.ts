@@ -85,7 +85,19 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
       stop: stopSequences,
       seed,
       response_format:
-        responseFormat?.type === "json" ? { type: "json_object" } : undefined,
+        responseFormat?.type === "json"
+          ? responseFormat.schema != null
+            ? {
+                type: "json_schema",
+                json_schema: {
+                  schema: responseFormat.schema,
+                  strict: true,
+                  name: responseFormat.name ?? "response",
+                  description: responseFormat.description,
+                },
+              }
+            : { type: "json_object" }
+          : undefined,
     };
 
     switch (type) {
@@ -106,7 +118,6 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
         return {
           args: {
             ...baseArgs,
-            response_format: { type: "json_object" },
           },
           warnings,
         };

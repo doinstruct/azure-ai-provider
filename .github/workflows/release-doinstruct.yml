@@ -1,0 +1,51 @@
+name: Release-doinstruct
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  release:
+    name: Release-doinstruct
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://npm.pkg.github.com"
+
+      - name: Install Dependencies
+        run: npm i
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Rename package to @doinstruct/community-azure-ai-provider
+        run: |
+          jq '.name = "@doinstruct/community-azure-ai-provider"' package.json > package.tmp.json
+          mv package.tmp.json package.json
+
+      - name: Publish mistral package
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_registry: "https://npm.pkg.github.com/@doinstruct"

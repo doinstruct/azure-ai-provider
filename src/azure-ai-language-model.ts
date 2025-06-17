@@ -52,7 +52,7 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
     return this.config.provider;
   }
 
-  private getArgs({
+  private async getArgs({
     mode,
     prompt,
     maxTokens,
@@ -72,7 +72,7 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
       warnings.push({ type: "unsupported-setting", setting: "topK" });
     }
 
-    const messages = convertToAzureChatMessages(prompt);
+    const messages = await convertToAzureChatMessages(prompt);
 
     const baseArgs = {
       messages,
@@ -145,7 +145,7 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
   async doGenerate(
     options: Parameters<LanguageModelV1["doGenerate"]>[0]
   ): Promise<Awaited<ReturnType<LanguageModelV1["doGenerate"]>>> {
-    const { args, warnings } = this.getArgs(options);
+    const { args, warnings } = await this.getArgs(options);
 
     const response = await this.client.path("/chat/completions").post({
       body: args,
@@ -185,7 +185,7 @@ export class AzureChatLanguageModel implements LanguageModelV1 {
   async doStream(
     options: Parameters<LanguageModelV1["doStream"]>[0]
   ): Promise<Awaited<ReturnType<LanguageModelV1["doStream"]>>> {
-    const { args, warnings } = this.getArgs(options);
+    const { args, warnings } = await this.getArgs(options);
     const body = { ...args, stream: true };
 
     const response = await this.client
